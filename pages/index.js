@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { supabase } from "../lib/supabase";
 
 const isOwner = process.env.NEXT_PUBLIC_OWNER === "true";
@@ -48,9 +49,9 @@ export default function Home() {
     <div className="min-h-screen bg-gradient-to-b from-blue-100 to-white">
       {/* Navbar */}
       <nav className="bg-blue-600 text-white p-4 flex justify-center gap-8 font-semibold">
-        <a href="/" className="hover:underline">Home</a>
-        <a href="/about" className="hover:underline">About</a>
-        <a href="/contact" className="hover:underline">Contact</a>
+        <Link href="/" className="hover:underline">Home</Link>
+        <Link href="/about" className="hover:underline">About</Link>
+        <Link href="/contact" className="hover:underline">Contact</Link>
       </nav>
 
       {/* Hero */}
@@ -121,3 +122,4 @@ export default function Home() {
     </div>
   );
 }
+

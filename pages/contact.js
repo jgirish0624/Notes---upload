@@ -1,11 +1,13 @@
+import Link from "next/link";
+
 export default function Contact() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
       {/* Navbar */}
       <nav className="bg-blue-600 text-white p-4 flex justify-center gap-8 font-semibold">
-        <a href="/" className="hover:underline">Home</a>
-        <a href="/about" className="hover:underline">About</a>
-        <a href="/contact" className="hover:underline">Contact</a>
+        <Link href="/" className="hover:underline">Home</Link>
+        <Link href="/about" className="hover:underline">About</Link>
+        <Link href="/contact" className="hover:underline">Contact</Link>
       </nav>
 
       <section className="max-w-3xl mx-auto py-16 text-center">
