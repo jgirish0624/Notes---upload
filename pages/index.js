@@ -1,15 +1,20 @@
 import { useState, useEffect } from "react";
-import Link from "next/link";
 import { supabase } from "../lib/supabase";
-
-const isOwner = process.env.NEXT_PUBLIC_OWNER === "true";
+import Link from "next/link";
 
 export default function Home() {
   const [file, setFile] = useState(null);
   const [message, setMessage] = useState("");
   const [filesList, setFilesList] = useState([]);
   const [search, setSearch] = useState("");
+  const [user, setUser] = useState(null);
+  const [showLoginForm, setShowLoginForm] = useState(false); // show login form
+  const [email, setEmail] = useState(""); // manual email input
+  const [password, setPassword] = useState(""); // manual password input
 
+  const ownerEmail = "jgirish0624@gmail.com"; // owner email
+
+  // Fetch files from Supabase storage
   const fetchFiles = async () => {
     const { data, error } = await supabase.storage
       .from("pdf-uploads")
@@ -23,8 +28,16 @@ export default function Home() {
 
   useEffect(() => {
     fetchFiles();
+
+    // Check for already logged-in user
+    const getUser = async () => {
+      const { data } = await supabase.auth.getUser();
+      if (data.user) setUser(data.user);
+    };
+    getUser();
   }, []);
 
+  // Upload PDF
   const uploadFile = async () => {
     if (!file) return setMessage("Select a file first");
     if (file.type !== "application/pdf") return setMessage("Only PDF files allowed!");
@@ -41,6 +54,21 @@ export default function Home() {
     }
   };
 
+  // Login function
+  const login = async () => {
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+    if (error) alert(error.message);
+    else {
+      setUser(data.user);
+      setShowLoginForm(false);
+      setEmail("");
+      setPassword("");
+    }
+  };
+
   const filteredFiles = filesList.filter((f) =>
     f.name.toLowerCase().includes(search.toLowerCase())
   );
@@ -48,11 +76,54 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-100 to-white">
       {/* Navbar */}
-      <nav className="bg-blue-600 text-white p-4 flex justify-center gap-8 font-semibold">
-        <Link href="/" className="hover:underline">Home</Link>
-        <Link href="/about" className="hover:underline">About</Link>
-        <Link href="/contact" className="hover:underline">Contact</Link>
+      <nav className="bg-blue-600 text-white p-4 flex justify-between items-center font-semibold">
+        <div className="flex gap-8">
+          <Link href="/" className="hover:underline">Home</Link>
+          <Link href="/about" className="hover:underline">About</Link>
+          <Link href="/contact" className="hover:underline">Contact</Link>
+        </div>
+        {!user && (
+          <button
+            onClick={() => setShowLoginForm(!showLoginForm)}
+            className="bg-white text-blue-600 font-bold py-1 px-3 rounded hover:bg-gray-100"
+          >
+            Login
+          </button>
+        )}
       </nav>
+
+      {/* Login Form */}
+      {showLoginForm && !user && (
+        <section className="max-w-md mx-auto bg-white p-6 rounded-lg shadow-md my-12">
+          <h3 className="text-xl font-semibold mb-4">Owner Login</h3>
+          <input
+            type="email"
+            placeholder="Email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="border p-2 rounded w-full mb-4"
+          />
+          <input
+            type="password"
+            placeholder="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="border p-2 rounded w-full mb-4"
+          />
+          <button
+            onClick={login}
+            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded w-full"
+          >
+            Login
+          </button>
+          <button
+            onClick={() => setShowLoginForm(false)}
+            className="mt-2 text-gray-600 underline w-full"
+          >
+            Cancel
+          </button>
+        </section>
+      )}
 
       {/* Hero */}
       <section className="text-center py-16">
@@ -64,19 +135,19 @@ export default function Home() {
         </h2>
       </section>
 
-      {/* Upload Section */}
-      {isOwner && (
+      {/* Upload Section (owner only) */}
+      {user?.email === ownerEmail && (
         <section className="max-w-md mx-auto bg-white p-6 rounded-lg shadow-md mb-12">
           <h3 className="text-xl font-semibold mb-4">Upload PDF</h3>
           <input
             type="file"
             accept="application/pdf"
             onChange={(e) => setFile(e.target.files[0])}
-            className="mb-4"
+            className="mb-4 w-full"
           />
           <button
             onClick={uploadFile}
-            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded w-full"
           >
             Upload
           </button>
@@ -102,7 +173,7 @@ export default function Home() {
             filteredFiles.map((file) => (
               <a
                 key={file.name}
-                href={`https://<your-project-ref>.supabase.co/storage/v1/object/public/pdf-uploads/${file.name}`}
+                href={`https://mfzhipzkqsedjrsdkkay.supabase.co/storage/v1/object/public/pdf-uploads/${file.name}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="block p-4 bg-white rounded shadow hover:bg-blue-50 transition"
