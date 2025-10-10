@@ -1,196 +1,48 @@
-import { useState, useEffect } from "react";
-import { supabase } from "../lib/supabase";
 import Link from "next/link";
+import { motion } from "framer-motion";
 
 export default function Home() {
-  const [file, setFile] = useState(null);
-  const [message, setMessage] = useState("");
-  const [filesList, setFilesList] = useState([]);
-  const [search, setSearch] = useState("");
-  const [user, setUser] = useState(null);
-  const [showLoginForm, setShowLoginForm] = useState(false); // show login form
-  const [email, setEmail] = useState(""); // manual email input
-  const [password, setPassword] = useState(""); // manual password input
-
-  const ownerEmail = "jgirish0624@gmail.com"; // owner email
-
-  // Fetch files from Supabase storage
-  const fetchFiles = async () => {
-    const { data, error } = await supabase.storage
-      .from("pdf-uploads")
-      .list("", { limit: 100, offset: 0 });
-
-    if (!error) {
-      const sortedData = data.sort((a, b) => a.name.localeCompare(b.name));
-      setFilesList(sortedData);
-    }
-  };
-
-  useEffect(() => {
-    fetchFiles();
-
-    // Check for already logged-in user
-    const getUser = async () => {
-      const { data } = await supabase.auth.getUser();
-      if (data.user) setUser(data.user);
-    };
-    getUser();
-  }, []);
-
-  // Upload PDF
-  const uploadFile = async () => {
-    if (!file) return setMessage("Select a file first");
-    if (file.type !== "application/pdf") return setMessage("Only PDF files allowed!");
-    if (file.size > 10 * 1024 * 1024) return setMessage("Max file size 10MB");
-
-    const { data, error } = await supabase.storage
-      .from("pdf-uploads")
-      .upload(file.name, file, { upsert: true });
-
-    if (error) setMessage("Upload failed: " + error.message);
-    else {
-      setMessage("Upload successful: " + data.path);
-      fetchFiles();
-    }
-  };
-
-  // Login function
-  const login = async () => {
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-    if (error) alert(error.message);
-    else {
-      setUser(data.user);
-      setShowLoginForm(false);
-      setEmail("");
-      setPassword("");
-    }
-  };
-
-  const filteredFiles = filesList.filter((f) =>
-    f.name.toLowerCase().includes(search.toLowerCase())
-  );
-
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-100 to-white">
-      {/* Navbar */}
-      <nav className="bg-blue-600 text-white p-4 flex justify-between items-center font-semibold">
-        <div className="flex gap-8">
-          <Link href="/" className="hover:underline">Home</Link>
-          <Link href="/about" className="hover:underline">About</Link>
-          <Link href="/contact" className="hover:underline">Contact</Link>
-        </div>
-        {!user && (
-          <button
-            onClick={() => setShowLoginForm(!showLoginForm)}
-            className="bg-white text-blue-600 font-bold py-1 px-3 rounded hover:bg-gray-100"
-          >
-            Login
-          </button>
-        )}
-      </nav>
+    <div className="min-h-screen bg-gradient-to-b from-black to-blue-900 text-white flex flex-col">
+      {/* Header */}
+      <header className="flex justify-between items-center p-5 bg-black bg-opacity-80 shadow-lg">
+        <h1 className="text-3xl font-bold tracking-wide">Grade 10 SHPS</h1>
+        <nav className="space-x-6 text-lg">
+          <Link href="/" className="hover:text-blue-400 transition">Home</Link>
+          <Link href="/about" className="hover:text-blue-400 transition">About</Link>
+          <Link href="/contact" className="hover:text-blue-400 transition">Contact</Link>
+          <Link href="/creator" className="text-blue-400 hover:text-blue-600">Creator’s Message</Link>
+          <Link href="/login" className="hover:text-blue-400 transition">Login / Signup</Link>
+        </nav>
+      </header>
 
-      {/* Login Form */}
-      {showLoginForm && !user && (
-        <section className="max-w-md mx-auto bg-white p-6 rounded-lg shadow-md my-12">
-          <h3 className="text-xl font-semibold mb-4">Owner Login</h3>
-          <input
-            type="email"
-            placeholder="Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="border p-2 rounded w-full mb-4"
-          />
-          <input
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="border p-2 rounded w-full mb-4"
-          />
-          <button
-            onClick={login}
-            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded w-full"
-          >
-            Login
-          </button>
-          <button
-            onClick={() => setShowLoginForm(false)}
-            className="mt-2 text-gray-600 underline w-full"
-          >
-            Cancel
-          </button>
-        </section>
-      )}
-
-      {/* Hero */}
-      <section className="text-center py-16">
-        <h1 className="text-5xl font-bold mb-4 animate-fade-in">
-          Mission 10th SHPS
-        </h1>
-        <h2 className="text-2xl text-gray-700 mb-8 animate-slide-up">
-          Uploaded PDFs
+      {/* Banner */}
+      <motion.div
+        initial={{ opacity: 0, y: -50 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 1.2 }}
+        className="relative flex-1 flex flex-col items-center justify-center text-center px-6"
+      >
+        <img
+          src="/download.jpeg"
+          alt="School"
+          className="w-full max-h-[400px] object-cover rounded-2xl shadow-lg mb-8"
+        />
+        <h2 className="text-4xl font-semibold mb-4 text-blue-300">
+          Welcome to Our Friendship Zone
         </h2>
-      </section>
-
-      {/* Upload Section (owner only) */}
-      {user?.email === ownerEmail && (
-        <section className="max-w-md mx-auto bg-white p-6 rounded-lg shadow-md mb-12">
-          <h3 className="text-xl font-semibold mb-4">Upload PDF</h3>
-          <input
-            type="file"
-            accept="application/pdf"
-            onChange={(e) => setFile(e.target.files[0])}
-            className="mb-4 w-full"
-          />
-          <button
-            onClick={uploadFile}
-            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded w-full"
-          >
-            Upload
-          </button>
-          <p className="mt-2 text-green-600">{message}</p>
-        </section>
-      )}
-
-      {/* Files List */}
-      <section className="max-w-3xl mx-auto mb-12">
-        <div className="mb-6 text-center">
-          <input
-            type="text"
-            placeholder="Search PDFs..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="border p-2 rounded w-2/3 sm:w-1/2"
-          />
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-          {filteredFiles.length === 0 ? (
-            <p className="text-center text-gray-500 col-span-full">No files found.</p>
-          ) : (
-            filteredFiles.map((file) => (
-              <a
-                key={file.name}
-                href={`https://mfzhipzkqsedjrsdkkay.supabase.co/storage/v1/object/public/pdf-uploads/${file.name}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="block p-4 bg-white rounded shadow hover:bg-blue-50 transition"
-              >
-                <h4 className="font-semibold text-lg">{file.name}</h4>
-                <p className="text-gray-500 text-sm">Click to download</p>
-              </a>
-            ))
-          )}
-        </div>
-      </section>
+        <p className="max-w-3xl text-lg leading-relaxed">
+          We are a group of spirited and united boys from Grade 10 at Sacred Heart Public School.
+          Together we share knowledge, laughter, and memories that shape our journey.
+          Our friendship is built on trust, fun, and understanding — a bond that makes every moment
+          special inside and outside the classroom.
+        </p>
+      </motion.div>
 
       {/* Footer */}
-      <footer className="bg-gray-100 py-6 text-center text-gray-600">
-        &copy; 2025 Mission 10th SHPS | All Rights Reserved
+      <footer className="bg-black text-center py-3 text-sm mt-10">
+        Created by <span className="font-semibold text-blue-400">J. Girish</span>
       </footer>
     </div>
   );
 }
-
